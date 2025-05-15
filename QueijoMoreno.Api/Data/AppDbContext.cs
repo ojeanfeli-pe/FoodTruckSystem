@@ -15,5 +15,7 @@ namespace QueijoMoreno.Api.Data
         public DbSet<TaxaEntrega> TaxasEntrega {get;set;}
         public DbSet<Motoboy> Motoboys {get;set;}
         public DbSet<Caixa> Caixas {get;set;}
+        public DbSet<Adicional> Adicionais {get;set;}
+        public DbSet<ItemPedidoAdicional> ItensPedidoAdicional {get;set;}
     }
 }

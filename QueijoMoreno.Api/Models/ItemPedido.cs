@@ -13,5 +13,7 @@ namespace QueijoMoreno.Api.Models
         public int Quantidade { get; set; } // Quantidade do produto
         public string? Observacao { get; set; } // Ex: “tirar cebola”, “bem passado”
         public decimal PrecoUnitario { get; set; } // Preço do produto no momento do pedido
+        public List<ItemPedidoAdicional>? Adicionais { get; set; }
+
     }
 }
