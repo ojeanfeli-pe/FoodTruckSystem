@@ -6,6 +6,8 @@ namespace QueijoMoreno.Api.Models
     public class Pedido
     {
         public int Id { get; set; } // Identificador único do pedido
+        public int? CaixaId { get; set; }              // Caixa ao qual esse pedido pertence
+        public Caixa? Caixa { get; set; }
 
         public int ClienteId { get; set; } // Chave estrangeira para Cliente
         public Cliente? Cliente { get; set; } // Navegação para o objeto Cliente
