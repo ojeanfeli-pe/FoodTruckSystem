@@ -83,5 +83,39 @@ namespace QueijoMoreno.Api.Controllers
 
             return Ok(pedidos);
         }
+
+        // GET: Listar pedidos que ainda não foram pagos (pagar depois)
+[HttpGet("pendentes")]
+public IActionResult GetPedidosPendentes()
+{
+    var pedidos = _context.Pedidos
+        .Include(p => p.Cliente)
+        .Include(p => p.Itens)
+        .ThenInclude(i => i.Produto)
+        .Where(p => p.PagarDepois && !p.Pago)
+        .OrderByDescending(p => p.DataHora)
+        .ToList();
+
+    return Ok(pedidos);
+}
+
+        // PUT: Confirmar pagamento de um pedido
+        [HttpPut("{id}/confirmar-pagamento")]
+        public IActionResult ConfirmarPagamento(int id)
+    {
+        var pedido = _context.Pedidos.Find(id);
+
+        if (pedido == null)
+            return NotFound("Pedido não encontrado.");
+
+        if (!pedido.PagarDepois)
+            return BadRequest("Este pedido não está marcado como 'pagar depois'.");
+
+            pedido.Pago = true;
+            _context.SaveChanges();
+
+            return Ok("Pagamento confirmado com sucesso.");
+        }
+
     }
 }

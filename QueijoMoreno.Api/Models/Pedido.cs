@@ -16,7 +16,8 @@ namespace QueijoMoreno.Api.Models
         public string? EnderecoEntrega { get; set; } // Endereço para entrega (se houver)
         public string? FormaPagamento { get; set; } // Ex: Pix, Dinheiro, Cartão
         public string? Observacoes { get; set; } // Qualquer observação do cliente
-
+        public bool PagarDepois { get; set; } = false;  // Define se o pedido será pago depois
+        public bool Pago { get; set; } = false;         // Indica se o pagamento já foi feito
         public decimal TaxaEntrega { get; set; } // Valor da taxa de entrega
         public decimal Total { get; set; } // Valor total do pedido (soma dos itens + taxa)
 
