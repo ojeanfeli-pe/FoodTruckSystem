@@ -16,37 +16,54 @@ namespace QueijoMoreno.Api.Controllers
             _context = context;
         }
 
-        // Método POST para registrar um novo pedido
         [HttpPost]
         public IActionResult Post([FromBody] Pedido pedido)
         {
-            // Verifica se o cliente existe antes de salvar o pedido
+            // Validação do cliente
             var cliente = _context.Clientes.Find(pedido.ClienteId);
             if (cliente == null)
                 return BadRequest("Cliente não encontrado.");
 
-            // Calcula o total dos itens
-            decimal totalDosItens = 0;
+            decimal totalPedido = 0;
 
             foreach (var item in pedido.Itens)
             {
-                // Busca o produto no banco de dados
+                // Buscar o produto
                 var produto = _context.Produtos.FirstOrDefault(p => p.Id == item.ProdutoId);
                 if (produto == null)
                     return BadRequest($"Produto com ID {item.ProdutoId} não encontrado.");
 
-                // Define o preço unitário e calcula o subtotal
                 item.PrecoUnitario = produto.Preco;
-                totalDosItens += item.PrecoUnitario * item.Quantidade;
+
+                decimal subtotal = item.PrecoUnitario * item.Quantidade;
+
+                // Calcular valor dos adicionais
+                if (item.Adicionais != null && item.Adicionais.Count > 0)
+                {
+                    foreach (var adicionalItem in item.Adicionais)
+                    {
+                        var adicional = _context.Adicionais.FirstOrDefault(a => a.Id == adicionalItem.AdicionalId && a.Ativo);
+                        if (adicional == null)
+                            return BadRequest($"Adicional com ID {adicionalItem.AdicionalId} não encontrado ou está inativo.");
+
+                        subtotal += adicional.Preco * item.Quantidade;
+
+                        // Atribui a entidade Adicional ao item (opcional para resposta futura)
+                        adicionalItem.Adicional = adicional;
+                    }
+                }
+
+                totalPedido += subtotal;
             }
 
-            // Soma com a taxa de entrega (se houver)
-            pedido.Total = totalDosItens + pedido.TaxaEntrega;
+            // Adiciona taxa de entrega (se houver)
+            totalPedido += pedido.TaxaEntrega;
 
-            // Define o horário atual
+            // Atualiza valores no pedido
+            pedido.Total = totalPedido;
             pedido.DataHora = DateTime.Now;
 
-            // Salva o pedido e os itens
+            // Salva no banco
             _context.Pedidos.Add(pedido);
             _context.SaveChanges();
 
@@ -85,19 +102,19 @@ namespace QueijoMoreno.Api.Controllers
         }
 
         // GET: Listar pedidos que ainda não foram pagos (pagar depois)
-[HttpGet("pendentes")]
-public IActionResult GetPedidosPendentes()
-{
-    var pedidos = _context.Pedidos
-        .Include(p => p.Cliente)
-        .Include(p => p.Itens)
-        .ThenInclude(i => i.Produto)
-        .Where(p => p.PagarDepois && !p.Pago)
-        .OrderByDescending(p => p.DataHora)
-        .ToList();
+        [HttpGet("pendentes")]
+        public IActionResult GetPedidosPendentes()
+        {
+            var pedidos = _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.Itens)
+                .ThenInclude(i => i.Produto)
+                .Where(p => p.PagarDepois && !p.Pago)
+                .OrderByDescending(p => p.DataHora)
+                .ToList();
 
-    return Ok(pedidos);
-}
+            return Ok(pedidos);
+        }
 
         // PUT: Confirmar pagamento de um pedido
         [HttpPut("{id}/confirmar-pagamento")]
