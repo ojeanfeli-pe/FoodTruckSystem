@@ -101,20 +101,6 @@ Impressão simulada com StringBuilder
 
 🙌 Autor
 Desenvolvido por Jean Moreira
-📫 Contato: [Seu e-mail ou LinkedIn aqui]
-
-yaml
-Copiar
-Editar
+📫 Contato: [jean.felipe.moreira12@gmail.com]
 
 ---
-
-### ✅ Próximo passo:
-
-- Copie esse conteúdo para o arquivo `README.md` no seu projeto
-- Suba para o GitHub com:
-
-```bash
-git add README.md
-git commit -m "docs: adiciona README com instruções e documentação da API"
-git push origin main
