@@ -1,4 +1,4 @@
-using Microsoft.AspCoreNet.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using QueijoMoreno.Api.Data;
 using QueijoMoreno.Api.Models;
 

@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using QueijoMoreno.Api.Data;
 using QueijoMoreno.Api.Models;
+using System.Text;
 
 namespace QueijoMoreno.Api.Controllers
 {
@@ -119,19 +120,79 @@ namespace QueijoMoreno.Api.Controllers
         // PUT: Confirmar pagamento de um pedido
         [HttpPut("{id}/confirmar-pagamento")]
         public IActionResult ConfirmarPagamento(int id)
-    {
-        var pedido = _context.Pedidos.Find(id);
+        {
+            var pedido = _context.Pedidos.Find(id);
 
-        if (pedido == null)
-            return NotFound("Pedido não encontrado.");
+            if (pedido == null)
+                return NotFound("Pedido não encontrado.");
 
-        if (!pedido.PagarDepois)
-            return BadRequest("Este pedido não está marcado como 'pagar depois'.");
+            if (!pedido.PagarDepois)
+                return BadRequest("Este pedido não está marcado como 'pagar depois'.");
 
             pedido.Pago = true;
             _context.SaveChanges();
 
             return Ok("Pagamento confirmado com sucesso.");
+        }
+
+        [HttpGet("{id}/imprimir")]
+        public IActionResult Imprimir(int id)
+        {
+            var pedido = _context.Pedidos
+                .Include(p => p.Cliente)
+                .Include(p => p.Itens)
+                    .ThenInclude(i => i.Produto)
+                .Include(p => p.Itens)
+                    .ThenInclude(i => i.Adicionais)
+                        .ThenInclude(a => a.Adicional)
+                .FirstOrDefault(p => p.Id == id);
+
+            if (pedido == null)
+                return NotFound("Pedido não encontrado.");
+
+            var texto = new StringBuilder();
+            texto.AppendLine("====== QUEIJO MORENO LANCHES ======");
+            texto.AppendLine($"Data: {pedido.DataHora:dd/MM/yyyy HH:mm}");
+            texto.AppendLine($"Cliente: {pedido.Cliente?.Nome} {pedido.Cliente?.Sobrenome}");
+            texto.AppendLine("------------------------------------");
+
+            foreach (var item in pedido.Itens)
+            {
+                texto.AppendLine($"{item.Quantidade}x {item.Produto?.Nome} - R${item.PrecoUnitario:F2}");
+
+                if (item.Adicionais != null && item.Adicionais.Any())
+                {
+                    foreach (var adicionalItem in item.Adicionais)
+                    {
+                        texto.AppendLine($"  + {adicionalItem.Adicional?.Nome} - R${adicionalItem.Adicional?.Preco:F2}");
+                    }
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.Observacao))
+                {
+                    texto.AppendLine($" Obs: {item.Observacao}");
+                }
+
+                texto.AppendLine(""); // espaço entre os itens
+            }
+
+            texto.AppendLine("Entrega:");
+
+            if (!string.IsNullOrWhiteSpace(pedido.EnderecoEntrega))
+                texto.AppendLine($"Endereço: {pedido.EnderecoEntrega}");
+
+            texto.AppendLine($"Bairro: {pedido.Bairro}"); // deixado em branco como você pediu
+
+            texto.AppendLine($"Forma de Pagamento: {pedido.FormaPagamento}");
+
+            if (pedido.TaxaEntrega > 0)
+                texto.AppendLine($"Taxa de Entrega: R${pedido.TaxaEntrega:F2}");
+
+            texto.AppendLine("------------------------------------");
+            texto.AppendLine($"TOTAL: R${pedido.Total:F2}");
+            texto.AppendLine("====================================");
+
+            return Ok(texto.ToString());
         }
 
     }
